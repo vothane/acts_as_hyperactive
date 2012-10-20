@@ -1,6 +1,6 @@
 require 'active_resource' 
 require 'webmock/rspec'
-require 'cgi'
+require 'pry'
 $:.unshift(File.join(File.dirname(__FILE__), "..", "lib"))
 require 'acts_as_hyperactive'
 
