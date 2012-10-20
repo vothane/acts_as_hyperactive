@@ -10,7 +10,9 @@ module Acts
             class << self
 
                def get_with_hyperactive(path, headers = {})
-
+                  with_auth do 
+                     request_EM(:get, path, build_request_headers(headers, :get, self.site.merge(path))) 
+                  end 
                end
 
                alias_method :get_without_hyperactive, :get
@@ -36,6 +38,34 @@ module Acts
 
                alias_method :delete_without_hyperactive, :delete
                alias_method :delete, :delete_with_hyperactive
+
+
+              private
+
+              def request_EM(method, path, *arguments)
+                url = "#{site.scheme}://#{site.host}:#{site.port}#{path}"
+                response = EM::HttpRequest.new(url).send(method, :query => arguments)
+                puts response
+
+                response.callback do
+                  result = ActiveSupport::Notifications.instrument("request.active_resource") do |payload|
+                    payload[:method]      = method
+                    payload[:request_uri] = url
+                    payload[:result]      = response
+                  end
+
+                  succeed(handle_response(result))
+                end  
+
+                response.errback do
+                  
+                end  
+
+                rescue Timeout::Error => e
+                  raise TimeoutError.new(e.message)
+                rescue OpenSSL::SSL::SSLError => e
+                  raise SSLError.new(e.message)  
+              end
 
             end
 
