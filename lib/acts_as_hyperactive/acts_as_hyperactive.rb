@@ -11,7 +11,7 @@ module Acts
 
                def get_with_hyperactive(path, headers = {})
                   with_auth do 
-                     request_EM(:get, path, build_request_headers(headers, :get, self.site.merge(path))) 
+                     async_request(:get, path, build_request_headers(headers, :get, self.site.merge(path))) 
                   end 
                end
 
@@ -42,7 +42,7 @@ module Acts
 
               private
 
-              def request_EM(method, path, *arguments)
+              def async_request(method, path, *arguments)
                 url = "#{site.scheme}://#{site.host}:#{site.port}#{path}"
                 response = EM::HttpRequest.new(url).send(method, :query => arguments)
                 puts response
