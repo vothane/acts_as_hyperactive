@@ -43,8 +43,11 @@ describe 'acts_as_hyperactive' do
         response = {:id => 1, :data => "blah"}.to_json
         {:body => response, :status => 200}
       end
-      binding.pry
-      ActingHyper.find(1).should_not be_nil  
+      #binding.pry
+      EventMachine.run do
+        ActingHyper.find(1).should_not be_nil 
+        EventMachine.stop
+      end 
     end
   end  
   

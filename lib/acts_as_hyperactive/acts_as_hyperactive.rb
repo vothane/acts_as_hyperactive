@@ -7,6 +7,8 @@ module Acts
       module ClassMethods
          def acts_as_hyperactive(options = {})
             
+            include EM::Deferrable
+            
             class << self
 
                def get_with_hyperactive(path, headers = {})
@@ -39,32 +41,41 @@ module Acts
                alias_method :delete_without_hyperactive, :delete
                alias_method :delete, :delete_with_hyperactive
 
-
               private
 
               def async_request(method, path, *arguments)
                 url = "#{site.scheme}://#{site.host}:#{site.port}#{path}"
                 response = EM::HttpRequest.new(url).send(method, :query => arguments)
-                puts response
 
                 response.callback do
-                  result = ActiveSupport::Notifications.instrument("request.active_resource") do |payload|
-                    payload[:method]      = method
-                    payload[:request_uri] = url
-                    payload[:result]      = response
-                  end
+                  begin
+                    result = ActiveSupport::Notifications.instrument("request.active_resource") do |payload|
+                      payload[:method]      = method
+                      payload[:request_uri] = url
+                      payload[:result]      = response
+                    end
+                    
+                    response_handler = Proc.new do 
+                      handled_response = handle_response(result)
+                      handled_response
+                    end  
 
-                  succeed(handle_response(result))
+                    result_callback  = Proc.new { |handled_response| succeed(handled_response) }
+
+                    EM.defer(response_handler, result_callback)
+
+                  rescue Timeout::Error => e
+                    raise TimeoutError.new(e.message)
+                    fail
+                  rescue OpenSSL::SSL::SSLError => e
+                    raise SSLError.new(e.message) 
+                    fail 
+                  end  
                 end  
 
                 response.errback do
-                  
+                  fail
                 end  
-
-                rescue Timeout::Error => e
-                  raise TimeoutError.new(e.message)
-                rescue OpenSSL::SSL::SSLError => e
-                  raise SSLError.new(e.message)  
               end
 
             end
