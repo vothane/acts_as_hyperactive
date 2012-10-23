@@ -1,93 +1,40 @@
 module Acts
-   module Hyperactive
-      def self.included(base)
-         base.extend ClassMethods
-      end
+  module Hyperactive
+    def self.included(base)
+      base.extend ClassMethods
+    end
 
-      module ClassMethods
-         def acts_as_hyperactive(options = {})
-            
-            include EM::Deferrable
-            
-            class << self
+    module ClassMethods
+      def acts_as_hyperactive(options = {})
 
-               def get_with_hyperactive(path, headers = {})
-                  with_auth do 
-                     async_request(:get, path, build_request_headers(headers, :get, self.site.merge(path))) 
-                  end 
-               end
-
-               alias_method :get_without_hyperactive, :get
-               alias_method :get, :get_with_hyperactive
-
-               def post_with_hyperactive(path, body = '', headers = {})
-
-               end
-
-               alias_method :post_without_hyperactive, :post
-               alias_method :post, :post_with_hyperactive
-
-               def put_with_hyperactive(path, body = '', headers = {})
-
-               end
-
-               alias_method :put_without_hyperactive, :put
-               alias_method :put, :put_with_hyperactive
-
-               def delete_with_hyperactive(path, headers = {})
-
-               end
-
-               alias_method :delete_without_hyperactive, :delete
-               alias_method :delete, :delete_with_hyperactive
-
-              private
-
-              def async_request(method, path, *arguments)
-                url = "#{site.scheme}://#{site.host}:#{site.port}#{path}"
-                response = EM::HttpRequest.new(url).send(method, :query => arguments)
-
-                response.callback do
-                  begin
-                    result = ActiveSupport::Notifications.instrument("request.active_resource") do |payload|
-                      payload[:method]      = method
-                      payload[:request_uri] = url
-                      payload[:result]      = response
-                    end
-                    
-                    response_handler = Proc.new do 
-                      handled_response = handle_response(result)
-                      handled_response
-                    end  
-
-                    result_callback  = Proc.new { |handled_response| succeed(handled_response) }
-
-                    EM.defer(response_handler, result_callback)
-
-                  rescue Timeout::Error => e
-                    raise TimeoutError.new(e.message)
-                    fail
-                  rescue OpenSSL::SSL::SSLError => e
-                    raise SSLError.new(e.message) 
-                    fail 
-                  end  
-                end  
-
-                response.errback do
-                  fail
-                end  
-              end
-
+        class << self
+          def connection_with_hyperactive(refresh = false)
+            if defined?(@connection) || superclass == Object
+              @connection = ActiveResource::AsyncConnection.new(site, format) if refresh || @connection.nil?
+              @connection.proxy = proxy if proxy
+              @connection.user = user if user
+              @connection.password = password if password
+              @connection.auth_type = auth_type if auth_type
+              @connection.timeout = timeout if timeout
+              @connection.ssl_options = ssl_options if ssl_options
+              @connection
+            else
+              superclass.connection
             end
+          end
 
-            include InstanceMethods
-         end
-      end
-      
-      module InstanceMethods
+          alias_method :connection_without_hyperactive, :connection
+          alias_method :connection, :connection_with_hyperactive
+        end
 
+        include InstanceMethods
       end
-   end
+    end
+
+    module InstanceMethods
+
+    end
+  end
 end
 
 ActiveResource::Base.send :include, Acts::Hyperactive
