@@ -1,4 +1,3 @@
-require 'active_resource' 
 require 'webmock/rspec'
 require 'pry'
 $:.unshift(File.join(File.dirname(__FILE__), "..", "lib"))

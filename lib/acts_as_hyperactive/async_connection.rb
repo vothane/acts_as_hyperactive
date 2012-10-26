@@ -1,7 +1,6 @@
 require 'active_support/core_ext/benchmark'
 require 'active_support/core_ext/uri'
 require 'active_support/core_ext/object/inclusion'
-require 'net/https'
 require 'date'
 require 'time'
 require 'uri'
@@ -21,7 +20,7 @@ module ActiveResource
       :head => 'Accept'
     }
 
-    attr_reader :site, :user, :password, :auth_type, :timeout, :proxy, :ssl_options
+    attr_reader :site, :user, :password, :auth_type, :timeout, :proxy, :ssl_options, :http_event_machine
     attr_accessor :format
 
     class << self
@@ -110,14 +109,20 @@ module ActiveResource
       # Makes a request to the remote service.
       def request(method, path, *arguments)
             url = "#{site.scheme}://#{site.host}:#{site.port}#{path}"
-            response = EventMachine::HttpRequest.new(url).send(method, :query => arguments)
+            @http_event_machine = EventMachine::HttpRequest.new(url).send(method) #, :query => arguments)
 
-            response.callback do
+            @http_event_machine.class_eval do
+              def body
+                @response.to_json
+              end  
+            end  
+
+            @http_event_machine.callback do
               begin
                 result = ActiveSupport::Notifications.instrument("request.active_resource") do |payload|
                   payload[:method] = method
                   payload[:request_uri] = url
-                  payload[:result] = response
+                  payload[:result] = @http_event_machine.response
                 end
 
                 response_handler = Proc.new do
@@ -138,7 +143,7 @@ module ActiveResource
               end
             end
 
-            response.errback do
+            @http_event_machine.errback do
               fail
             end
       end

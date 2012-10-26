@@ -4,7 +4,7 @@ describe 'acts_as_hyperactive' do
 
   class ActingHyper < ActiveResource::Base
     acts_as_hyperactive
-    self.site = "http://localhost:3000"
+    self.site = "http://www.site.com"
   end
 
 
@@ -19,15 +19,11 @@ describe 'acts_as_hyperactive' do
   context "when using em-http-request after calling acts_as_hyperactive alias methods" do
 
     before(:each) do
-      stub_request(:get, 'http://localhost:3000/acting_hypers/1.json').
-          with(:headers => {'Accept' => 'application/json', 'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'User-Agent' => 'Ruby'}).
-          to_return do |request|
-        response = {:id => 1, :data => "blah"}.to_json
-        {:body => response, :status => 200}
-      end
+      stub_request(:get, /.*/).to_return(:body => 'foo', :status => 200)
     end
 
     before(:all) do
+      WebMock::HttpLibAdapters::EmHttpRequestAdapter.enable!
       WebMock.disable_net_connect!
     end
 
@@ -39,10 +35,9 @@ describe 'acts_as_hyperactive' do
       ActiveResource::AsyncConnection.should_receive :get
       EventMachine.run do
         res = ActingHyper.find(1)
+        binding.pry
         EventMachine.stop
-      end 
-      binding.pry
-      res.should_not be_nil 
+      end
     end
   end
 

@@ -5,6 +5,7 @@ module Acts
     end
 
     module ClassMethods
+
       def acts_as_hyperactive(options = {})
 
         class << self
@@ -25,6 +26,7 @@ module Acts
 
           alias_method :connection_without_hyperactive, :connection
           alias_method :connection, :connection_with_hyperactive
+          
         end
 
         include InstanceMethods
