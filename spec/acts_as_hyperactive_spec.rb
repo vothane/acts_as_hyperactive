@@ -7,7 +7,6 @@ describe 'acts_as_hyperactive' do
     self.site = "http://www.site.com"
   end
 
-
   context "when included" do
     
     it "should included acts_as_hyperactive alias methods" do
@@ -19,7 +18,7 @@ describe 'acts_as_hyperactive' do
   context "when using em-http-request after calling acts_as_hyperactive alias methods" do
 
     before(:each) do
-      stub_request(:get, /.*/).to_return(:body => 'foo', :status => 200)
+      stub_request(:get, /.*/).to_return(:body => {:id => 1, :data => "foo"}, :status => 200)
     end
 
     before(:all) do
@@ -31,13 +30,16 @@ describe 'acts_as_hyperactive' do
       WebMock.allow_net_connect!
     end
 
-    it "should find something" do
-      ActiveResource::AsyncConnection.should_receive :get
+    it "should find data that is given by WebMock" do
+
       EventMachine.run do
-        res = ActingHyper.find(1)
-        binding.pry
+        ActiveResource::AsyncConnection.should_receive :async_request
+        result = ActingHyper.find(1)
+        result.id.should == 1
+        result.data.should == "foo"
         EventMachine.stop
       end
+
     end
   end
 

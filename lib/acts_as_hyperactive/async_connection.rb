@@ -78,7 +78,7 @@ module ActiveResource
     # Executes a GET request.
     # Used to get (find) resources.
     def get(path, headers = {})
-      with_auth { request(:get, path, build_request_headers(headers, :get, self.site.merge(path))) }
+      with_auth { async_request(:get, path, build_request_headers(headers, :get, self.site.merge(path))) }
     end
 
     # Executes a DELETE request (see HTTP protocol documentation if unfamiliar).
@@ -107,15 +107,27 @@ module ActiveResource
 
     private
       # Makes a request to the remote service.
-      def request(method, path, *arguments)
+      def async_request(method, path, *arguments)
             url = "#{site.scheme}://#{site.host}:#{site.port}#{path}"
             @http_event_machine = EventMachine::HttpRequest.new(url).send(method) #, :query => arguments)
 
             @http_event_machine.class_eval do
               def body
-                @response.to_json
+                if @stubbed_webmock_response
+                  return { :body => @stubbed_webmock_response.body }.to_json
+                else  
+                  if @response == ""
+                    return { :body => "" }.to_json
+                  else
+                    return @response.to_json
+                  end  
+                end  
               end  
             end  
+
+            Hash.class_eval do
+              def bytesize; self.size; end
+            end
 
             @http_event_machine.callback do
               begin
