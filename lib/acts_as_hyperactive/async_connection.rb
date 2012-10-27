@@ -110,24 +110,6 @@ module ActiveResource
       def async_request(method, path, *arguments)
             url = "#{site.scheme}://#{site.host}:#{site.port}#{path}"
             @http_event_machine = EventMachine::HttpRequest.new(url).send(method) #, :query => arguments)
-binding.pry
-            @http_event_machine.class_eval do
-              def body
-                if @stubbed_webmock_response
-                  return { :body => @stubbed_webmock_response.body }.to_json
-                else  
-                  if @response == ""
-                    return { :body => "" }.to_json
-                  else
-                    return @response.to_json
-                  end  
-                end  
-              end  
-            end  
-
-            Hash.class_eval do
-              def bytesize; self.size; end
-            end
 
             @http_event_machine.callback do
               begin
