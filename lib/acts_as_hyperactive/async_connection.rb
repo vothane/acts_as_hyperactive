@@ -110,7 +110,7 @@ module ActiveResource
       def async_request(method, path, *arguments)
             url = "#{site.scheme}://#{site.host}:#{site.port}#{path}"
             @http_event_machine = EventMachine::HttpRequest.new(url).send(method) #, :query => arguments)
-
+binding.pry
             @http_event_machine.class_eval do
               def body
                 if @stubbed_webmock_response
@@ -134,7 +134,7 @@ module ActiveResource
                 result = ActiveSupport::Notifications.instrument("request.active_resource") do |payload|
                   payload[:method] = method
                   payload[:request_uri] = url
-                  payload[:result] = @http_event_machine.response
+                  payload[:result] = @http_event_machine.body
                 end
 
                 response_handler = Proc.new do
