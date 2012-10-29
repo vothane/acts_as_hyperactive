@@ -7,7 +7,7 @@
         if @response == ""
           return { :body => "" }.to_json
         else
-          return @response.to_json
+          return { :body => @response }.to_json
         end  
       end  
     end  
