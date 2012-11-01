@@ -182,19 +182,18 @@ module ActiveResource
 
       def new_http
         if @proxy
-          Net::HTTP.new(@site.host, @site.port, @proxy.host, @proxy.port, @proxy.user, @proxy.password)
+          EventMachine::HttpRequest.new("#{site.scheme}://#{site.host}:#{site.port}#{path}")
         else
-          Net::HTTP.new(@site.host, @site.port)
+          EventMachine::HttpRequest.new("#{site.scheme}://#{site.host}:#{site.port}#{path}")
         end
       end
 
       def configure_http(http)
-        http = apply_ssl_options(http)
+        #http = apply_ssl_options(http)
 
-        # Net::HTTP timeouts default to 60 seconds.
+        # timeouts default to 60 seconds.
         if @timeout
-          http.open_timeout = @timeout
-          http.read_timeout = @timeout
+          http = EventMachine::HttpRequest.new("#{site.scheme}://#{site.host}:#{site.port}#{path}", :connect_timeout => 60)
         end
 
         http
