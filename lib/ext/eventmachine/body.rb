@@ -10,6 +10,10 @@
           return { :body => @response }.to_json
         end  
       end  
+    end 
+
+    def [](key)
+      []
     end  
   end  
 end            

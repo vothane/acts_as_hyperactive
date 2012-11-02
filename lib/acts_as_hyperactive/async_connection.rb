@@ -96,7 +96,7 @@ module ActiveResource
     # Executes a POST request.
     # Used to create new resources.
     def post(path, body = '', headers = {})
-      with_auth { request(:post, path, body.to_s, build_request_headers(headers, :post, self.site.merge(path))) }
+      with_auth { async_request(:post, path, body.to_s, build_request_headers(headers, :post, self.site.merge(path))) }
     end
 
     # Executes a HEAD request.
@@ -109,7 +109,14 @@ module ActiveResource
       # Makes a request to the remote service.
       def async_request(method, path, *arguments)
             url = "#{site.scheme}://#{site.host}:#{site.port}#{path}"
-            @http_event_machine = EventMachine::HttpRequest.new(url).send(method) #, :query => arguments)
+
+            options = arguments.slice!(0)
+            if (method == :get) && (options.instance_of?( Hash ))
+              @http_event_machine = EventMachine::HttpRequest.new(url).send(method)
+            elsif (method == :post) && (options.instance_of?( String )) 
+              args = ActiveSupport::JSON.decode options
+              @http_event_machine = EventMachine::HttpRequest.new(url).send(method, :query => args)
+            end 
 
             @http_event_machine.callback do
               begin
