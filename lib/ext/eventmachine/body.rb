@@ -10,10 +10,14 @@
           return { :body => @response }.to_json
         end  
       end  
-    end 
+    end
 
     def [](key)
-      []
-    end  
+      @response_header[key]
+    end
+
+    def code
+      @stubbed_webmock_response.status.first
+    end
   end  
 end            

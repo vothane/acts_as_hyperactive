@@ -55,8 +55,7 @@ describe 'acts_as_hyperactive' do
   context "when using em-http-request for http post requests" do
 
     before(:each) do
-      matz  = { :person => { :id => 1, :name => "Matz" } }.to_json
-      stub_request(:post, /.*/).to_return(:body => matz, :status => 201)
+      stub_request(:post, /.*/).to_return({:body => {:save => true}}, :status => 201)
     end
     
     before(:all) do
@@ -71,12 +70,10 @@ describe 'acts_as_hyperactive' do
     it "should asynchronously save data" do 
 
       EventMachine.should_receive :defer
-
+      
       EventMachine.run do
         act_hyper = ActingHyper.new({ :id => 1, :name => "Matz" })
         act_hyper.save.should be_true
-        #result.id.should == 1
-        #result.data.should == "foo"
         EventMachine.stop
       end
 

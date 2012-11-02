@@ -84,13 +84,13 @@ module ActiveResource
     # Executes a DELETE request (see HTTP protocol documentation if unfamiliar).
     # Used to delete resources.
     def delete(path, headers = {})
-      with_auth { request(:delete, path, build_request_headers(headers, :delete, self.site.merge(path))) }
+      with_auth { async_request(:delete, path, build_request_headers(headers, :delete, self.site.merge(path))) }
     end
 
     # Executes a PUT request (see HTTP protocol documentation if unfamiliar).
     # Used to update resources.
     def put(path, body = '', headers = {})
-      with_auth { request(:put, path, body.to_s, build_request_headers(headers, :put, self.site.merge(path))) }
+      with_auth { async_request(:put, path, body.to_s, build_request_headers(headers, :put, self.site.merge(path))) }
     end
 
     # Executes a POST request.
@@ -102,7 +102,7 @@ module ActiveResource
     # Executes a HEAD request.
     # Used to obtain meta-information about resources, such as whether they exist and their size (via response headers).
     def head(path, headers = {})
-      with_auth { request(:head, path, build_request_headers(headers, :head, self.site.merge(path))) }
+      with_auth { async_request(:head, path, build_request_headers(headers, :head, self.site.merge(path))) }
     end
 
     private
