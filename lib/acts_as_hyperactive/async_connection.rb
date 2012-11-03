@@ -111,9 +111,9 @@ module ActiveResource
             url = "#{site.scheme}://#{site.host}:#{site.port}#{path}"
 
             options = arguments.slice!(0)
-            if (method == :get) && (options.instance_of?( Hash ))
+            if (method == :get) && (options.instance_of? Hash )
               @http_event_machine = EventMachine::HttpRequest.new(url).send(method)
-            elsif (method == :post) && (options.instance_of?( String )) 
+            elsif ([:post, :put].include? method) && (options.instance_of? String ) 
               args = ActiveSupport::JSON.decode options
               @http_event_machine = EventMachine::HttpRequest.new(url).send(method, :query => args)
             end 
