@@ -111,11 +111,13 @@ module ActiveResource
             url = "#{site.scheme}://#{site.host}:#{site.port}#{path}"
 
             options = arguments.slice!(0)
-            if (method == :get) && (options.instance_of? Hash )
+            if ([:get, :delete].include? method) && (options.instance_of? Hash )
               @http_event_machine = EventMachine::HttpRequest.new(url).send(method)
             elsif ([:post, :put].include? method) && (options.instance_of? String ) 
               args = ActiveSupport::JSON.decode options
               @http_event_machine = EventMachine::HttpRequest.new(url).send(method, :query => args)
+            else
+              raise ClientError.new("Something bad happened.")
             end 
 
             @http_event_machine.callback do
